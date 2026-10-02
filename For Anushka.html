@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>For Anushka</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#2a1b3d;--bg2:#4a2545;--fg:#fff4ec;--accent:#ffb88c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--fg);font-family:'Cormorant Garamond',Georgia,serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#stage{position:relative;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
+.line{position:absolute;max-width:min(90vw,640px);font-size:clamp(24px,5.5vw,38px);line-height:1.4;opacity:0;transform:translateY(10px);transition:opacity 1.4s ease,transform 1.4s ease}
+.line.in{opacity:1;transform:none}
+.line em{color:var(--accent)}
+.name{font-size:clamp(52px,16vw,120px);font-weight:600;letter-spacing:.04em;color:var(--accent);text-shadow:0 0 30px rgba(255,184,140,.5)}
+.name span{display:inline-block;opacity:0;transform:translateY(14px) scale(.9);transition:opacity .9s ease,transform .9s ease}
+.name span.in{opacity:1;transform:none}
+.small{font-size:clamp(20px,4vw,28px);margin-top:.6em;display:block;opacity:.85}
+#bar{position:fixed;left:0;top:0;height:3px;width:0;background:var(--accent);opacity:.7}
+#replay{position:fixed;bottom:calc(28px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:transparent;color:var(--fg);border:1px solid var(--accent);border-radius:999px;padding:10px 26px;font:inherit;font-size:20px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity 1.2s}
+#replay.show{opacity:1;pointer-events:auto}
+@media(prefers-reduced-motion:reduce){.line,.name span{transition-duration:.01s}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="bar"></div>
+<div id="stage"></div>
+<button id="replay">Watch again</button>
+<script>
+// floating lights
+const cv=document.getElementById('c'),cx=cv.getContext('2d');let W,H,L=[];
+function size(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+size();addEventListener('resize',size);
+for(let i=0;i<38;i++)L.push({x:Math.random(),y:Math.random(),r:3+Math.random()*10,s:.02+Math.random()*.05,p:Math.random()*6.28});
+(function draw(t){cx.clearRect(0,0,W,H);
+for(const o of L){o.y-=o.s/60;if(o.y<-.05)o.y=1.05;
+const a=.12+.12*Math.sin(t/1500+o.p),x=o.x*W+Math.sin(t/3000+o.p)*14,y=o.y*H;
+const g=cx.createRadialGradient(x,y,0,x,y,o.r*2.5);g.addColorStop(0,`rgba(255,200,160,${a*2})`);g.addColorStop(1,'rgba(255,200,160,0)');
+cx.fillStyle=g;cx.beginPath();cx.arc(x,y,o.r*2.5,0,6.28);cx.fill()}
+requestAnimationFrame(draw)})(0);
+
+// story
+const stage=document.getElementById('stage'),bar=document.getElementById('bar'),btn=document.getElementById('replay');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const story=[
+ {h:'Hi.',d:3000},
+ {h:'A few days ago, I met someone new.',d:4200},
+ {name:'Anushka',d:7500},
+ {h:'Talking with you has become<br>something I <em>look forward to</em>.',d:5200},
+ {h:'You make it easy to smile.',d:4200},
+ {h:'I\'m not asking for anything.',d:3800},
+ {h:'I\'m just really enjoying getting to know you,<br>and I\'d like to keep going,<br>at whatever pace feels right for you.',d:7000},
+ {h:'No rush.<br><em>Just glad we met.</em>',d:5000,end:true}
+];
+const total=story.reduce((a,s)=>a+s.d,0);
+let token=0;
+async function play(){
+ const me=++token;btn.classList.remove('show');stage.innerHTML='';
+ bar.style.transition='none';bar.style.width='0';
+ await sleep(50);bar.style.transition=`width ${total}ms linear`;bar.style.width='100%';
+ for(const s of story){
+  if(me!==token)return;
+  const el=document.createElement('div');el.className='line';
+  if(s.name){el.innerHTML='<div class="name">'+[...s.name].map(c=>`<span>${c}</span>`).join('')+'</div>';}
+  else el.innerHTML=s.h;
+  stage.appendChild(el);await sleep(60);el.classList.add('in');
+  if(s.name){const sp=el.querySelectorAll('span');for(const x of sp){x.classList.add('in');await sleep(380)}}
+  const used=s.name?s.name.length*380:0;
+  await sleep(s.d-used-1400);
+  if(me!==token)return;
+  if(s.end){el.insertAdjacentHTML('beforeend','<span class="small">— for Anushka ♡</span>');await sleep(1200);btn.classList.add('show');return}
+  el.classList.remove('in');await sleep(1400);
+ }
+}
+btn.onclick=play;play();
+</script>
+</body>
+</html>
